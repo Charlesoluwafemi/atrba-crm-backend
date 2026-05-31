@@ -25,8 +25,6 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 
 # ── Environment ───────────────────────────────────────────────────────────────
-load_dotenv()
-
 SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")  # service_role key
 
