@@ -1,9 +1,0 @@
-resource_db.py
-resource_main.py
-schemas.py
-storage.py
-public.py
-.env
-venv/
-__pycache__/
-database.py
