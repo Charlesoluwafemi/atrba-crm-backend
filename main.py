@@ -44,7 +44,7 @@ app = FastAPI(
 # ── CORS ──────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # Tighten this to your domain(s) in production
+    allow_origins=["https://www.abovetherestadvisors.com/"],          # Tighten this to your domain(s) in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
