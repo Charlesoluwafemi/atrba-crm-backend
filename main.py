@@ -9,7 +9,7 @@ Handles lead capture (ATRBA) and full blog CMS with admin panel.
 """
 
 # ── Imports ───────────────────────────────────────────────────────────────────
-from fastapi import FastAPI, HTTPException, Depends, Header, status
+from fastapi import FastAPI, HTTPException, Depends, Header, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, field_validator
@@ -203,6 +203,39 @@ async def get_admin_user(authorization: Optional[str] = Header(None)):
 @app.get("/", tags=["Health"])
 def health_check():
     return {"status": "ok", "service": "ATRBA + Blog CMS API", "version": "1.0.0"}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IMAGE UPLOAD ENDPOINT
+# Accepts a multipart file, stores it in Supabase Storage bucket "blog-images",
+# and returns the public URL for Quill to insert as <img src="...">.
+# ─────────────────────────────────────────────────────────────────────────────
+BLOG_IMAGES_BUCKET = "blog-images"
+
+@app.post("/upload-image", tags=["Blog - Admin"])
+async def upload_image(file: UploadFile = File(...), session=Depends(get_admin_user)):
+    """Upload an image to Supabase Storage and return its public URL."""
+    allowed_types = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "bin"
+    object_name = f"{uuid.uuid4().hex}.{ext}"
+
+    contents = await file.read()
+
+    try:
+        supabase.storage.from_(BLOG_IMAGES_BUCKET).upload(
+            path=object_name,
+            file=contents,
+            file_options={"content-type": file.content_type},
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(exc)}")
+
+    public_url = supabase.storage.from_(BLOG_IMAGES_BUCKET).get_public_url(object_name)
+
+    return {"url": public_url}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
